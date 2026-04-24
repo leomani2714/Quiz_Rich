@@ -210,17 +210,25 @@
     .stat-box.green-box .s-val { color: var(--green); }
 
     /* Timer bar */
-    .timer-bar-wrap {
-      height: 5px; background: var(--surface2); border-radius: 3px;
-      margin-bottom: 14px; overflow: hidden;
+    .timer-bar-wrap { margin-bottom: 14px; }
+    .timer-row { display: flex; align-items: center; gap: 10px; }
+    .timer-countdown {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 28px; font-weight: 800; min-width: 54px; text-align: right;
+      color: var(--accent2); transition: color 0.4s; flex-shrink: 0;
     }
+    .timer-countdown.warn   { color: var(--gold); }
+    .timer-countdown.danger { color: var(--red); animation: timerPulse 0.5s ease-in-out infinite; }
+    @keyframes timerPulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.08);} }
+    .timer-track { flex:1; height:8px; background:var(--surface2); border-radius:4px; overflow:hidden; }
     .timer-bar-fill {
-      height: 100%; border-radius: 3px;
+      height: 100%; border-radius: 4px;
       background: linear-gradient(90deg, var(--accent), var(--green));
       transition: width 1s linear, background 0.5s;
     }
-    .timer-bar-fill.warn { background: linear-gradient(90deg, var(--gold), #ff9933); }
+    .timer-bar-fill.warn   { background: linear-gradient(90deg, var(--gold), #ff9933); }
     .timer-bar-fill.danger { background: linear-gradient(90deg, var(--red), #ff3333); }
+    .timer-label { font-size:11px; color:var(--text3); font-weight:700; letter-spacing:1px; text-transform:uppercase; flex-shrink:0; }
 
     /* Streak / combo banner */
     .combo-banner {
@@ -657,9 +665,15 @@
       </div>
     </div>
 
-    <!-- Timer bar -->
+    <!-- Timer -->
     <div class="timer-bar-wrap" id="timerBarWrap">
-      <div class="timer-bar-fill" id="timerBarFill"></div>
+      <div class="timer-row">
+        <span class="timer-label">Time</span>
+        <div class="timer-track">
+          <div class="timer-bar-fill" id="timerBarFill" style="width:100%"></div>
+        </div>
+        <span class="timer-countdown" id="timerCountdown">60</span>
+      </div>
     </div>
 
     <!-- XP bar -->
@@ -774,6 +788,7 @@ let timerEnabled = true, readAloudEnabled = false, soundEnabled = true;
 let selectedVoiceIndex = 0, availableVoices = [];
 let gamePaused = false;
 let answeredQuestions = [];
+const seenQuestions = new Set();
 let hintUsed = false;
 let currentProblemType = 'arithmetic';
 
@@ -1039,11 +1054,14 @@ function updateComboBanner() {
 function updateTimerBar() {
   if (!timerEnabled) { timerBarWrap.style.display='none'; return; }
   timerBarWrap.style.display='block';
-  const pct = (timeLeft / totalTimeForQ) * 100;
+  const pct = Math.max(0, (timeLeft / totalTimeForQ) * 100);
   timerBarFill.style.width = pct + '%';
   timerBarFill.className = 'timer-bar-fill';
-  if (pct < 30) timerBarFill.classList.add('danger');
-  else if (pct < 55) timerBarFill.classList.add('warn');
+  const countdown = document.getElementById('timerCountdown');
+  countdown.className = 'timer-countdown';
+  if (pct < 30) { timerBarFill.classList.add('danger'); countdown.classList.add('danger'); }
+  else if (pct < 55) { timerBarFill.classList.add('warn'); countdown.classList.add('warn'); }
+  countdown.textContent = timeLeft;
 }
 
 // ══════════════════════════════════════════════════════
@@ -1110,10 +1128,10 @@ function generateAlgebraQuestion() {
 }
 
 function generateSqrtQuestion() {
-  const min=problemDigits===1?1:10**(problemDigits-1), max=10**problemDigits-1;
-  const minR=Math.ceil(Math.sqrt(min)), maxR=Math.floor(Math.sqrt(max));
-  const r=Math.floor(Math.random()*(maxR-minR+1))+minR;
-  currentAnswer=r; qText.textContent=`√${r*r} = ?`;
+  const maxRoot = currentMode==='hard' ? 20 : currentMode==='medium' ? 15 : 12;
+  const r = Math.floor(Math.random() * maxRoot) + 1;
+  currentAnswer = `±${r}`;   // ±r as string answer
+  qText.textContent = `√${r * r} = ?`;
 }
 
 function generateFactorQuestion() {
@@ -1304,12 +1322,7 @@ function processAnswer(userAnswer) {
     else {
       hintUsed = false; hintBtn.disabled = false; hintBtn.style.opacity='1';
       generateQuestion();
-      if (timerEnabled) {
-        clearInterval(timerInterval);
-        timeLeft = totalTimeForQ;
-        updateTimerBar();
-        startTimer();
-      }
+      // timer counts down for whole session
     }
   }, 1100);
 }
@@ -1367,7 +1380,7 @@ function skipQuestion() {
   if (!timerEnabled && currentQuestion >= totalQuestions) { endGame(); return; }
   hintUsed=false; hintBtn.disabled=false; hintBtn.style.opacity='1';
   generateQuestion();
-  if (timerEnabled) { clearInterval(timerInterval); timeLeft=totalTimeForQ; updateTimerBar(); startTimer(); }
+  // timer counts down for whole session
 }
 
 function pauseGame() {
@@ -1410,10 +1423,15 @@ function generateQuestion() {
   const badgeMap = { arithmetic:'Arithmetic', algebra:'Algebra', sqrt:'Square Root', factor:'Factorize' };
   qTypeBadge.textContent = badgeMap[type] || type;
 
-  if (type==='algebra')     generateAlgebraQuestion();
-  else if (type==='sqrt')   generateSqrtQuestion();
-  else if (type==='factor') generateFactorQuestion();
-  else                      generateArithmeticQuestion();
+  let _attempts = 0;
+  do {
+    if (type==='algebra')     generateAlgebraQuestion();
+    else if (type==='sqrt')   generateSqrtQuestion();
+    else if (type==='factor') generateFactorQuestion();
+    else                      generateArithmeticQuestion();
+    _attempts++;
+  } while (_attempts < 15 && seenQuestions.has(qText.textContent));
+  seenQuestions.add(qText.textContent);
 
   // Trigger slide-in animation
   requestAnimationFrame(() => { qText.className = 'q-text slide-in'; });
@@ -1477,7 +1495,7 @@ function startGame() {
   problemDigits = parseInt(problemSizeSelect.value,10);
   includeAlgebra = algebraToggle.checked; includeSqrt = sqrtToggle.checked; includeFactor = factorToggle.checked;
   factorDifficulty = factorDifficultySelect.value||factorDifficulty;
-  gamePaused=false; answeredQuestions=[];
+  gamePaused=false; answeredQuestions=[]; seenQuestions.clear();
   hintUsed=false; hintBtn.disabled=false; hintBtn.style.opacity='1';
 
   scoreEl.textContent='0'; streakEl.textContent='0'; accuracyEl.textContent='—'; qNumEl.textContent='1';
