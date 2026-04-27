@@ -209,18 +209,7 @@
     .stat-box.green-box { border-color: rgba(61,255,160,0.3); background: rgba(61,255,160,0.07); }
     .stat-box.green-box .s-val { color: var(--green); }
 
-    /* Timer bar */
-    .timer-bar-wrap { margin-bottom: 14px; }
-    .timer-row { display: flex; align-items: center; gap: 10px; }
-    .timer-countdown {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 28px; font-weight: 800; min-width: 54px; text-align: right;
-      color: var(--accent2); transition: color 0.4s; flex-shrink: 0;
-    }
-    .timer-countdown.warn   { color: var(--gold); }
-    .timer-countdown.danger { color: var(--red); animation: timerPulse 0.5s ease-in-out infinite; }
-    @keyframes timerPulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.08);} }
-    .timer-track { flex:1; height:8px; background:var(--surface2); border-radius:4px; overflow:hidden; }
+    /* Timer bar — actual bar styles only; layout done in .timer-row above */
     .timer-bar-fill {
       height: 100%; border-radius: 4px;
       background: linear-gradient(90deg, var(--accent), var(--green));
@@ -538,6 +527,67 @@
     }
     .play-again-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 36px rgba(124,106,255,0.45); }
 
+
+    /* ── LIVES ──────────────────────────────────────── */
+    .lives-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: 6px; margin-bottom: 10px;
+    }
+    .heart { font-size: 22px; transition: transform 0.3s, opacity 0.3s; }
+    .heart.lost { opacity: 0.18; transform: scale(0.75); }
+    @keyframes heartLost { 0%{transform:scale(1.4);} 50%{transform:scale(0.6);} 100%{transform:scale(0.75);} }
+    .heart.losing { animation: heartLost 0.4s ease forwards; }
+
+    /* ── AUTO-SCALE BADGE ────────────────────────────── */
+    .diff-badge {
+      display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px;
+      font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+      margin-left: 8px; vertical-align: middle;
+      background: var(--green-dim); color: var(--green); border: 1px solid var(--green);
+      transition: all 0.4s;
+    }
+    .diff-badge.med { background: var(--gold-dim); color: var(--gold); border-color: var(--gold); }
+    .diff-badge.hard { background: var(--red-dim); color: var(--red); border-color: var(--red); }
+
+    /* ── STEP HINT BOX ───────────────────────────────── */
+    .hint-box {
+      margin-top: 12px; padding: 10px 14px;
+      background: rgba(255,209,77,0.08); border: 1px solid rgba(255,209,77,0.3);
+      border-radius: var(--r-sm); font-size: 13px; color: var(--gold);
+      line-height: 1.6;
+    }
+    .hint-steps { margin-top: 6px; display: flex; flex-direction: column; gap: 4px; }
+    .hint-step  { font-family: 'JetBrains Mono', monospace; font-size: 12px;
+                  color: var(--text2); padding-left: 10px; border-left: 2px solid var(--gold); }
+
+    /* ── CHALLENGE MODE SELECTOR ────────────────────── */
+    .challenge-row {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px;
+    }
+    .chal-btn {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 10px 6px; background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: var(--r-md); cursor: pointer; transition: all 0.2s; gap: 3px;
+    }
+    .chal-btn:hover { border-color: var(--accent); background: rgba(124,106,255,0.07); }
+    .chal-btn.active { border-color: var(--accent); background: rgba(124,106,255,0.14); }
+    .chal-icon { font-size: 20px; }
+    .chal-name { font-size: 12px; font-weight: 800; color: var(--text); }
+    .chal-desc { font-size: 10px; color: var(--text3); text-align: center; }
+
+    /* ── TIMER with visible number ───────────────────── */
+    .timer-bar-wrap { margin-bottom: 14px; }
+    .timer-row { display: flex; align-items: center; gap: 10px; }
+    .timer-countdown {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 28px; font-weight: 800; min-width: 54px; text-align: right;
+      color: var(--accent2); transition: color 0.4s; flex-shrink: 0;
+    }
+    .timer-countdown.warn   { color: var(--gold); }
+    .timer-countdown.danger { color: var(--red); animation: timerPulse 0.5s ease-in-out infinite; }
+    @keyframes timerPulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.08);} }
+    .timer-track { flex:1; height:8px; background:var(--surface2); border-radius:4px; overflow:hidden; }
+
     .hidden { display: none !important; }
 
     /* Light mode */
@@ -640,6 +690,25 @@
       </div>
     </div>
 
+    <div class="section-label">Challenge Mode</div>
+    <div class="challenge-row" id="challengeRow">
+      <div class="chal-btn active" data-chal="normal">
+        <span class="chal-icon">🎯</span>
+        <span class="chal-name">Normal</span>
+        <span class="chal-desc">Timer + lives</span>
+      </div>
+      <div class="chal-btn" data-chal="sudden">
+        <span class="chal-icon">💀</span>
+        <span class="chal-name">Sudden Death</span>
+        <span class="chal-desc">1 wrong = over</span>
+      </div>
+      <div class="chal-btn" data-chal="blitz">
+        <span class="chal-icon">⚡</span>
+        <span class="chal-name">Blitz</span>
+        <span class="chal-desc">20 Qs, fastest wins</span>
+      </div>
+    </div>
+
     <button class="start-btn" id="startBtn">Start Blitz →</button>
   </div>
 
@@ -663,6 +732,13 @@
         <div class="s-label">Q #</div>
         <div class="s-val" id="qNumEl">1</div>
       </div>
+    </div>
+
+    <!-- Lives -->
+    <div class="lives-row" id="livesRow" style="display:none">
+      <span class="heart" id="h1">❤️</span>
+      <span class="heart" id="h2">❤️</span>
+      <span class="heart" id="h3">❤️</span>
     </div>
 
     <!-- Timer -->
@@ -694,7 +770,7 @@
 
     <!-- Question card -->
     <div class="card q-card" id="qCard">
-      <div class="q-type-badge" id="qTypeBadge">Arithmetic</div>
+      <div class="q-type-badge" id="qTypeBadge">Arithmetic</div><span class="diff-badge" id="diffBadge">Easy</span>
       <div class="q-text" id="qText">?</div>
       <!-- MC choices (shown by default) -->
       <div class="choices-grid" id="choicesGrid"></div>
@@ -789,6 +865,14 @@ let selectedVoiceIndex = 0, availableVoices = [];
 let gamePaused = false;
 let answeredQuestions = [];
 const seenQuestions = new Set();
+
+// ── New feature state ─────────────────────────────
+let lives = 3;                   // lives system
+let challengeMode = 'normal';    // 'normal' | 'sudden' | 'blitz'
+let blitzStartTime = 0;          // for blitz mode timing
+let autoScaleLevel = 0;          // 0=easy 1=medium 2=hard (auto-scaling within session)
+let autoScaleCorrectStreak = 0;  // consecutive correct for scaling up
+let autoScaleWrongStreak = 0;    // consecutive wrong for scaling down
 let hintUsed = false;
 let currentProblemType = 'arithmetic';
 
@@ -1052,7 +1136,8 @@ function updateComboBanner() {
 //  TIMER BAR
 // ══════════════════════════════════════════════════════
 function updateTimerBar() {
-  if (!timerEnabled) { timerBarWrap.style.display='none'; return; }
+  // Blitz mode: no countdown timer
+  if (challengeMode === 'blitz' || !timerEnabled) { timerBarWrap.style.display='none'; return; }
   timerBarWrap.style.display='block';
   const pct = Math.max(0, (timeLeft / totalTimeForQ) * 100);
   timerBarFill.style.width = pct + '%';
@@ -1081,14 +1166,12 @@ function getRandomNumberByDigits(digits) {
   if (digits === 1) return randInt(1,9);
   return randInt(10**(digits-1), 10**digits-1);
 }
-function gcd(a,b){ a=Math.abs(a);b=Math.abs(b); while(b){[a,b]=[b,a%b];} return a; }
 function fmtFrac(n,d){
-  // reduce and format a fraction n/d as string like "3/4" or "-2/5"
-  if(d===0) return '0';
+  if(!d) return '0';
   if(n%d===0) return String(n/d);
   const g=gcd(Math.abs(n),Math.abs(d));
-  const sign=(n<0)!==(d<0)?'-':'';
-  return `${sign}${Math.abs(n/g)}/${Math.abs(d/g)}`;
+  const neg=(n<0)!=(d<0);
+  return `${neg?'-':''}${Math.abs(n/g)}/${Math.abs(d/g)}`;
 }
 function chooseProblemType() {
   const types = ['arithmetic'];
@@ -1098,124 +1181,88 @@ function chooseProblemType() {
   return types[Math.floor(Math.random()*types.length)];
 }
 
-// ── ARITHMETIC ────────────────────────────────────────
-// Includes: positive ints, negative ints, rationals (fractions)
+// ── ARITHMETIC — integers + negatives + rationals ────
 function generateArithmeticQuestion() {
-  const mode = currentMode;
-  // roll what sub-type: 0=int arithmetic, 1=negative int, 2=rational/fraction
   const subRoll = Math.random();
-  const useNeg      = subRoll < 0.35;                        // 35% negative integers
-  const useFraction = !useNeg && subRoll < 0.60;             // 25% rational numbers
-  // useFraction only on medium/hard; fall back to normal on easy
-  const doFraction  = useFraction && mode !== 'easy';
+  const useNeg      = subRoll < 0.35;
+  const doFraction  = !useNeg && subRoll < 0.60 && currentMode !== 'easy';
 
   if (doFraction) {
-    // Rational: a/b ÷ c/d or a/b + c/d or a/b × c/d
-    const ops2 = ['+','-','×','÷'];
-    const op = ops2[randInt(0,3)];
-    const a=randInt(1,9), b=randInt(2,8), c=randInt(1,9), d=randInt(2,8);
-    // ensure b≠d for interest, avoid trivial
-    let n, den;
-    if(op==='+'){  n=a*d+c*b; den=b*d; }
-    else if(op==='-'){ n=a*d-c*b; den=b*d; }
-    else if(op==='×'){ n=a*c; den=b*d; }
-    else /* ÷ */     { n=a*d; den=b*c; }
-    currentAnswer = fmtFrac(n,den);
-    qText.textContent = `${fmtFrac(a,b)} ${op} ${fmtFrac(c,d)} = ?`;
+    const ops2=['+','-','×','÷'], op=ops2[randInt(0,3)];
+    const a=randInt(1,9),b=randInt(2,8),c=randInt(1,9),d=randInt(2,8);
+    let n,den;
+    if(op==='+'){n=a*d+c*b;den=b*d;}
+    else if(op==='-'){n=a*d-c*b;den=b*d;}
+    else if(op==='×'){n=a*c;den=b*d;}
+    else{n=a*d;den=b*c;}
+    currentAnswer=fmtFrac(n,den);
+    qText.textContent=`${fmtFrac(a,b)} ${op} ${fmtFrac(c,d)} = ?`;
     return;
   }
 
-  const op = operations[Math.floor(Math.random()*operations.length)];
-
+  const op=operations[Math.floor(Math.random()*operations.length)];
   if (useNeg) {
-    // Negative integer arithmetic — operands may be negative
-    const maxN = mode==='hard'?50:mode==='medium'?20:10;
-    const a = randInt(-maxN, maxN);
-    const b = randInt(-maxN, maxN);
-    if (op==='÷') {
-      // ensure clean division
-      const divisor = randInt(1,maxN)||1;
-      const quotient = randInt(-10,10)||1;
-      const dividend = divisor*quotient;
-      currentAnswer = quotient;
-      qText.textContent = `${dividend} ÷ ${divisor} = ?`;
-    } else if (op==='×') {
-      currentAnswer = a*b;
-      qText.textContent = `(${a}) × (${b}) = ?`;
-    } else if (op==='+') {
-      currentAnswer = a+b;
-      const bStr = b<0 ? `(${b})` : String(b);
-      qText.textContent = `${a} + ${bStr} = ?`;
-    } else { // −
-      currentAnswer = a-b;
-      const bStr = b<0 ? `(${b})` : String(b);
-      qText.textContent = `${a} − ${bStr} = ?`;
+    const maxN=currentMode==='hard'?50:currentMode==='medium'?20:10;
+    const a=randInt(-maxN,maxN), b=randInt(-maxN,maxN);
+    if(op==='÷'){
+      const div=randInt(1,maxN)||1, quot=randInt(-10,10)||1;
+      currentAnswer=quot; qText.textContent=`${div*quot} ÷ ${div} = ?`;
+    } else if(op==='×'){
+      currentAnswer=a*b; qText.textContent=`(${a}) × (${b}) = ?`;
+    } else if(op==='+'){
+      currentAnswer=a+b; qText.textContent=`${a} + (${b}) = ?`;
+    } else {
+      currentAnswer=a-b; qText.textContent=`${a} − (${b}) = ?`;
     }
     return;
   }
 
-  // Standard positive integer arithmetic
-  let a, b;
-  if (op === '÷') {
-    const q = getRandomNumberByDigits(Math.max(1,problemDigits-1));
-    const maxB = Math.floor((10**problemDigits-1)/q);
-    const minB = Math.max(2, Math.ceil(10**(Math.min(problemDigits,2)-1)));
-    b = minB+Math.floor(Math.random()*Math.max(1,maxB-minB+1));
-    a = b*q; currentAnswer = q;
-    qText.textContent = `${a} ÷ ${b} = ?`;
-    return;
+  let a,b;
+  if(op==='÷'){
+    const q=getRandomNumberByDigits(Math.max(1,problemDigits-1));
+    const maxB=Math.floor((10**problemDigits-1)/q);
+    const minB=Math.max(2,Math.ceil(10**(Math.min(problemDigits,2)-1)));
+    b=minB+Math.floor(Math.random()*Math.max(1,maxB-minB+1));
+    a=b*q; currentAnswer=q; qText.textContent=`${a} ÷ ${b} = ?`; return;
   }
-  a = getRandomNumberByDigits(problemDigits);
-  b = getRandomNumberByDigits(Math.min(problemDigits,2));
-  if (op==='-') { currentAnswer=a-b; qText.textContent=`${a} − ${b} = ?`; }
-  else if (op==='×') { currentAnswer=a*b; qText.textContent=`${a} × ${b} = ?`; }
-  else { currentAnswer=a+b; qText.textContent=`${a} + ${b} = ?`; }
+  a=getRandomNumberByDigits(problemDigits);
+  b=getRandomNumberByDigits(Math.min(problemDigits,2));
+  if(op==='-'){currentAnswer=a-b;qText.textContent=`${a} − ${b} = ?`;}
+  else if(op==='×'){currentAnswer=a*b;qText.textContent=`${a} × ${b} = ?`;}
+  else{currentAnswer=a+b;qText.textContent=`${a} + ${b} = ?`;}
 }
 
-// ── ALGEBRA ──────────────────────────────────────────
-// Solutions are integers (including negatives)
+// ── ALGEBRA — integer solutions including negatives ──
 function generateAlgebraQuestion() {
-  const maxN = currentMode==='hard'?15:currentMode==='medium'?10:5;
-  const choice = Math.random();
-  // x can be any integer in [-maxN, maxN] \ {0}
-  function randX(){ let v=0; while(!v) v=randInt(-maxN,maxN); return v; }
-  if (choice<0.2){
-    const a=randInt(1,maxN), x=randX();
-    currentAnswer=x;
-    const rhs=x+a;
-    qText.textContent=`x + ${a} = ${rhs}`;
-  } else if (choice<0.4){
-    const a=randInt(1,maxN), x=randX();
-    currentAnswer=x;
-    const rhs=x-a;
-    qText.textContent=`x − ${a} = ${rhs}`;
-  } else if (choice<0.6){
-    const a=randInt(2,8), x=randX();
-    currentAnswer=x;
-    qText.textContent=`${a}x = ${a*x}`;
-  } else if (choice<0.8){
-    const a=randInt(2,6), x=randX();
-    currentAnswer=x;
-    qText.textContent=`x / ${a} = ${x}`;  // answer is x, rhs shown is x (user solves for lhs numerator)
-    // reframe: x / a = rhs => x = a*rhs
-    const rhs=x; currentAnswer=a*rhs;
-    qText.textContent=`x / ${a} = ${rhs}`;
+  const maxN=currentMode==='hard'?15:currentMode==='medium'?10:5;
+  function randX(){let v=0;while(!v)v=randInt(-maxN,maxN);return v;}
+  const choice=Math.random();
+  if(choice<0.2){
+    const a=randInt(1,maxN),x=randX();
+    currentAnswer=x; qText.textContent=`x + ${a} = ${x+a}`;
+  } else if(choice<0.4){
+    const a=randInt(1,maxN),x=randX();
+    currentAnswer=x; qText.textContent=`x − ${a} = ${x-a}`;
+  } else if(choice<0.6){
+    const a=randInt(2,8),x=randX();
+    currentAnswer=x; qText.textContent=`${a}x = ${a*x}`;
+  } else if(choice<0.8){
+    const a=randInt(2,6),x=randX();
+    currentAnswer=a*x; qText.textContent=`x / ${a} = ${x}`;
   } else {
-    const a=randInt(2,6), x=randX(), b=randInt(1,10);
+    const a=randInt(2,6),x=randX(),b=randInt(1,10);
     currentAnswer=x;
     const rhs=a*x+b;
-    const rhsStr=rhs>=0?String(rhs):`(${rhs})`;
-    qText.textContent=`${a}x + ${b} = ${rhsStr}`;
+    qText.textContent=`${a}x + ${b} = ${rhs}`;
   }
 }
 
-// ── SQRT ─────────────────────────────────────────────
-// Answer shown as ±r
+// ── SQRT — ± answers, wide pool ──────────────────────
 function generateSqrtQuestion() {
-  const maxRoot = currentMode==='hard' ? 20 : currentMode==='medium' ? 15 : 12;
-  const r = randInt(1, maxRoot);
-  currentAnswer = `\u00b1${r}`;
-  qText.textContent = `\u221a${r*r} = ?`;
+  const maxRoot=currentMode==='hard'?20:currentMode==='medium'?15:12;
+  const r=randInt(1,maxRoot);
+  currentAnswer=`\u00b1${r}`;
+  qText.textContent=`\u221a${r*r} = ?`;
 }
 
 function generateFactorQuestion() {
@@ -1262,66 +1309,21 @@ const KB_LABELS = ['1','2','3','4'];
 function buildChoices() {
   choicesGrid.innerHTML = '';
   const correct = currentAnswer;
-  const correctStr = String(correct);
-
-  // ── Fraction distractors ─────────────────────────
-  if (typeof correct === 'string' && /^-?\d+\/\d+$/.test(correctStr)) {
-    const [numS, denS] = correctStr.split('/');
-    const n=parseInt(numS), d=parseInt(denS);
-    const set = new Set([normAnswer(correctStr)]);
-    const candidates = [
-      fmtFrac(n+1,d), fmtFrac(n-1,d), fmtFrac(n,d+1), fmtFrac(n,d-1||1),
-      fmtFrac(n+2,d), fmtFrac(n,d+2), fmtFrac(-n,d), fmtFrac(n+1,d+1)
-    ];
-    for(const c of shuffle(candidates)){
-      if(set.size>=4) break;
-      const nc=normAnswer(c);
-      if(nc!==normAnswer(correctStr) && !set.has(nc)) set.add(c);
-    }
-    const arr = shuffle(Array.from(set));
-    arr.forEach((val,i) => {
-      const btn = makeChoiceBtn(val, KB_LABELS[i], () => processAnswer(val));
-      choicesGrid.appendChild(btn);
-    });
-    return;
-  }
-
-  // ── ±r distractors (sqrt) ────────────────────────
-  if (typeof correct === 'string' && correctStr.startsWith('\u00b1')) {
-    const r = parseInt(correctStr.slice(1));
-    const set = new Set([correctStr]);
-    const cands = [`±${r+1}`,`±${r+2}`,`±${r-1}`,`±${r+3}`,String(r),String(-r)].filter(v=>v!==correctStr&&!v.includes('-0'));
-    for(const c of shuffle(cands)){
-      if(set.size>=4) break;
+  if (typeof correct === 'number') {
+    const set = new Set([correct]);
+    while (set.size < 4) {
+      const delta = Math.max(1, Math.floor(Math.abs(correct)*0.3)||2);
+      let c = correct + (Math.floor(Math.random()*9)-4)*delta;
+      if (c===correct) c = correct+(Math.floor(Math.random()*5)-2)||correct+1;
       set.add(c);
     }
     const arr = shuffle(Array.from(set));
     arr.forEach((val,i) => {
-      const btn = makeChoiceBtn(val, KB_LABELS[i], () => processAnswer(val));
+      const btn = makeChoiceBtn(String(val), KB_LABELS[i], () => processAnswer(val));
       choicesGrid.appendChild(btn);
     });
-    return;
-  }
-
-  // ── Numeric distractors (int answers, including negative) ───
-  if (typeof correct === 'number') {
-    const set = new Set([correct]);
-    let att=0;
-    while(set.size<4 && att++<60){
-      const delta=Math.max(1,Math.round(Math.abs(correct)*0.25)||2);
-      const c=correct+(Math.floor(Math.random()*9)-4)*delta;
-      if(c!==correct) set.add(c);
-    }
-    const arr=shuffle(Array.from(set));
-    arr.forEach((val,i)=>{
-      const btn=makeChoiceBtn(String(val),KB_LABELS[i],()=>processAnswer(val));
-      choicesGrid.appendChild(btn);
-    });
-    return;
-  }
-
-  // ── String distractors (algebra/factor expressions) ─────────
-  {
+  } else {
+    const correctStr = String(correct);
     const set = new Set([correctStr]);
     const nums = (correctStr.match(/-?\d+/g)||[]).map(Number);
     let attempts = 0;
@@ -1336,9 +1338,9 @@ function buildChoices() {
       if (cand===correctStr) cand=correctStr.replace(/\d+/,n=>String(parseInt(n)+2));
       set.add(cand.trim());
     }
-    const arr=shuffle(Array.from(set));
-    arr.forEach((val,i)=>{
-      const btn=makeChoiceBtn(val,KB_LABELS[i],()=>processAnswer(val));
+    const arr = shuffle(Array.from(set));
+    arr.forEach((val,i) => {
+      const btn = makeChoiceBtn(val, KB_LABELS[i], () => processAnswer(val));
       choicesGrid.appendChild(btn);
     });
   }
@@ -1393,15 +1395,9 @@ function exprSignature(expr) {
 }
 
 function normAnswer(v) {
-  // Normalise fraction strings: "6/4" => "3/2", "-4/2" => "-2"
-  const s = String(v).trim().replace(/\s+/g,'');
-  const m = s.match(/^(-?\d+)\/(-?\d+)$/);
-  if (m) {
-    let n=parseInt(m[1]), d=parseInt(m[2]);
-    if(d<0){n=-n;d=-d;}
-    const g=gcd(Math.abs(n),d); n/=g; d/=g;
-    return d===1?String(n):`${n}/${d}`;
-  }
+  const s=String(v).trim().replace(/\s+/g,'');
+  const m=s.match(/^(-?\d+)\/(-?\d+)$/);
+  if(m){let n=parseInt(m[1]),d=parseInt(m[2]);if(d<0){n=-n;d=-d;}const g=gcd(Math.abs(n),d);n/=g;d/=g;return d===1?String(n):`${n}/${d}`;}
   return s.toLowerCase();
 }
 function processAnswer(userAnswer) {
@@ -1412,7 +1408,7 @@ function processAnswer(userAnswer) {
     if(u===c){ isCorrect=true; }
     else {
       const su=exprSignature(String(userAnswer)), sc=exprSignature(String(currentAnswer));
-      isCorrect = (su&&sc) ? su===sc : false;
+      isCorrect=(su&&sc)?su===sc:false;
     }
   } else {
     isCorrect = Number(userAnswer) === Number(currentAnswer);
@@ -1433,6 +1429,7 @@ function processAnswer(userAnswer) {
   if (isCorrect) {
     streak++; bestStreak = Math.max(bestStreak, streak);
     totalCorrect++;
+    autoScaleUpdate(true);
     const mult = getComboMultiplier();
     const streakBonus = XP_STREAK_BONUS[Math.min(streak, XP_STREAK_BONUS.length-1)];
     const speedBonus = isSpeedBonus ? 5 : 0;
@@ -1451,23 +1448,38 @@ function processAnswer(userAnswer) {
     if (isSpeedBonus) fbHtml += ` <span class="speed-tag">⚡ +${speedBonus}</span>`;
     showFeedback(true, fbHtml);
     if (isSpeedBonus) showSpeedToast(speedBonus);
+
   } else {
     streak = 0; streakEl.textContent = 0;
     updateComboBanner();
+    autoScaleUpdate(false);
     playWrong(); shakeCard(); createFlash(false);
     showFeedback(false, `✗ Answer: <span style="font-family:'JetBrains Mono',monospace">${currentAnswer}</span>`);
+
+    // Mode-specific wrong-answer handling
+    if (challengeMode === 'sudden') {
+      updateAccuracy();
+      setTimeout(() => { clearHints(); endGame(); }, 1100);
+      return;
+    }
+    if (challengeMode === 'normal') { loseLife(); }
+    if (lives <= 0) {
+      updateAccuracy();
+      setTimeout(() => { clearHints(); endGame(); }, 1100);
+      return;
+    }
   }
 
   updateAccuracy();
 
   setTimeout(() => {
     clearHints();
-    if (!timerEnabled && currentQuestion >= totalQuestions) endGame();
-    else {
-      hintUsed = false; hintBtn.disabled = false; hintBtn.style.opacity='1';
-      generateQuestion();
-      // global countdown — no per-question reset
-    }
+    const blitzDone = challengeMode === 'blitz' && currentQuestion >= 20;
+    const normalDone = !timerEnabled && currentQuestion >= totalQuestions;
+    if (blitzDone || normalDone) { endGame(); return; }
+    hintUsed = false; hintBtn.disabled = false; hintBtn.style.opacity='1';
+    generateQuestion();
+    // global countdown — no per-question reset
   }, 1100);
 }
 
@@ -1477,36 +1489,172 @@ function showFeedback(ok, html) {
   feedbackEl.classList.remove('hidden');
 }
 
+
 // ══════════════════════════════════════════════════════
-//  HINT SYSTEM
+//  LIVES
+// ══════════════════════════════════════════════════════
+function renderLives() {
+  const hearts = ['h1','h2','h3'];
+  hearts.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.toggle('lost', i >= lives);
+  });
+}
+function loseLife() {
+  if (lives <= 0) return;
+  const id = 'h' + lives;
+  const el = document.getElementById(id);
+  if (el) { el.classList.add('losing'); setTimeout(()=>{ el.classList.remove('losing'); el.classList.add('lost'); }, 420); }
+  lives--;
+  if (lives <= 0) { setTimeout(endGame, 500); }
+}
+
+// ══════════════════════════════════════════════════════
+//  AUTO-SCALE DIFFICULTY
+// ══════════════════════════════════════════════════════
+const SCALE_UP_AFTER   = 4;   // consecutive correct to bump difficulty
+const SCALE_DOWN_AFTER = 3;   // consecutive wrong to drop difficulty
+const SCALE_LABELS = ['Easy','Medium','Hard'];
+const SCALE_DIGITS = [1, 2, 3];
+const SCALE_MODES  = ['easy', 'medium', 'hard'];
+
+function autoScaleUpdate(wasCorrect) {
+  if (wasCorrect) {
+    autoScaleCorrectStreak++;
+    autoScaleWrongStreak = 0;
+    if (autoScaleCorrectStreak >= SCALE_UP_AFTER && autoScaleLevel < 2) {
+      autoScaleLevel++;
+      autoScaleCorrectStreak = 0;
+      applyAutoScale();
+      showScaleToast('⬆ Difficulty up: ' + SCALE_LABELS[autoScaleLevel]);
+    }
+  } else {
+    autoScaleWrongStreak++;
+    autoScaleCorrectStreak = 0;
+    if (autoScaleWrongStreak >= SCALE_DOWN_AFTER && autoScaleLevel > 0) {
+      autoScaleLevel--;
+      autoScaleWrongStreak = 0;
+      applyAutoScale();
+      showScaleToast('⬇ Difficulty down: ' + SCALE_LABELS[autoScaleLevel]);
+    }
+  }
+}
+
+function applyAutoScale() {
+  currentMode   = SCALE_MODES[autoScaleLevel];
+  problemDigits = SCALE_DIGITS[autoScaleLevel];
+  const badge = document.getElementById('diffBadge');
+  if (badge) {
+    badge.textContent = SCALE_LABELS[autoScaleLevel];
+    badge.className = 'diff-badge' + (autoScaleLevel===2?' hard':autoScaleLevel===1?' med':'');
+  }
+}
+
+function showScaleToast(msg) {
+  const t = document.getElementById('levelupToast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2000);
+}
+
+// ══════════════════════════════════════════════════════
+//  STEP-BY-STEP HINT GENERATOR
 // ══════════════════════════════════════════════════════
 function generateHint() {
   if (hintUsed) return;
-  let hint;
-  if (typeof currentAnswer === 'string') {
-    const strHints = [
-      'The answer is a factored expression with 2 factors',
-      'Try two numbers that multiply to give the constant term',
-      'The answer uses parentheses like (x ± a)(x ± b)',
-      'Check the sign of the constant term to determine factor signs'
-    ];
-    hint = strHints[Math.floor(Math.random()*strHints.length)];
-  } else {
-    const hints = [
-      `Between ${currentAnswer-10} and ${currentAnswer+10}`,
-      `The answer is ${currentAnswer%2===0?'even':'odd'}`,
-      `Starts with ${String(Math.abs(currentAnswer)).charAt(0)}`,
-      `It's a ${String(Math.abs(currentAnswer)).length}-digit number`
-    ];
-    hint = hints[Math.floor(Math.random()*hints.length)];
-  }
+  clearHints();
   const box = document.createElement('div');
   box.className = 'hint-box'; box.id = 'activeHint';
-  box.textContent = '💡 ' + hint;
+
+  const q = qText.textContent;
+  const steps = getHintSteps(q, currentAnswer, currentProblemType);
+
+  box.innerHTML = '<strong>💡 Step-by-step:</strong><div class="hint-steps">' +
+    steps.map(s => `<div class="hint-step">${s}</div>`).join('') +
+    '</div>';
+
   qCard.appendChild(box);
   hintUsed = true; hintBtn.disabled = true; hintBtn.style.opacity='0.4';
   beep(700, 0.15);
 }
+
+function getHintSteps(q, ans, type) {
+  try {
+    if (type === 'sqrt') {
+      const r = parseInt(String(ans).replace('±',''));
+      return [
+        `√(${r*r}) — find a number that multiplied by itself gives ${r*r}`,
+        `${r} × ${r} = ${r*r} ✓`,
+        `Remember: square roots have two values: +${r} and −${r}`,
+        `Answer: ±${r}`
+      ];
+    }
+    if (type === 'factor') {
+      return [
+        `Look at the quadratic expression`,
+        `Find two numbers that multiply to the constant and add to the middle coefficient`,
+        `Write as (x ± a)(x ± b)`,
+        `Answer: ${ans}`
+      ];
+    }
+    if (type === 'algebra') {
+      // e.g. "3x + 5 = 14"
+      const mx = q.match(/(-?\d+)x\s*[+−-]\s*(\d+)\s*=\s*(-?[\d-]+)/);
+      if (mx) {
+        const a=parseInt(mx[1]), b=parseInt(mx[2].replace('−','-')), rhs=parseInt(mx[3]);
+        const sign = q.includes('−') && !q.includes('+ −') ? -1 : 1;
+        const b2 = sign * b;
+        return [
+          `${a}x + ${b2} = ${rhs}`,
+          `Subtract ${b2} from both sides: ${a}x = ${rhs} − ${b2} = ${rhs-b2}`,
+          `Divide both sides by ${a}: x = ${rhs-b2} ÷ ${a} = ${(rhs-b2)/a}`,
+          `Answer: x = ${ans}`
+        ];
+      }
+      return [`Isolate x step by step`, `Answer: ${ans}`];
+    }
+    // Arithmetic — parse the expression
+    const addM = q.match(/(-?[\d.]+)\s*\/\s*(-?[\d.]+)\s*[+−\-]\s*(-?[\d.]+)\s*\/\s*(-?[\d.]+)/);
+    if (addM) {
+      // fraction operation
+      const [,a,b,c,d] = addM.map(Number);
+      const op = q.includes('−') ? '−' : q.includes('+') ? '+' : q.includes('×') ? '×' : '÷';
+      const lcd = (b*d)/gcd(Math.abs(b),Math.abs(d));
+      return [
+        `${a}/${b} ${op} ${c}/${d}`,
+        `Find common denominator: LCD = ${lcd}`,
+        `Convert: ${a*lcd/b}/${lcd} ${op} ${c*lcd/d}/${lcd}`,
+        `Compute numerator, then simplify`,
+        `Answer: ${ans}`
+      ];
+    }
+    // Simple arithmetic
+    const numM = q.match(/(-?[\d.]+)\s*([+−×÷\-])\s*\(?(-?[\d.]+)\)?/);
+    if (numM) {
+      const a = parseFloat(numM[1]), op = numM[2], b = parseFloat(numM[3]);
+      if (op === '+')  return [`Start with ${a}`, `Add ${b}: ${a} + ${b} = ${a+b}`, `Answer: ${ans}`];
+      if (op === '−' || op === '-') return [`Start with ${a}`, `Subtract ${b}: ${a} − ${b} = ${a-b}`, `Answer: ${ans}`];
+      if (op === '×') {
+        const partial = [];
+        if(b<=12) {
+          for(let i=1;i<=Math.min(b,4);i++) partial.push(`${a} × ${i} = ${a*i}`);
+          partial.push(`...`);
+        }
+        return [`Multiply ${a} by ${b}`, ...partial.slice(0,3), `Answer: ${ans}`];
+      }
+      if (op === '÷') return [
+        `Divide ${a} by ${b}`,
+        `How many times does ${b} go into ${a}?`,
+        `${b} × ${Math.abs(ans)} = ${b*Math.abs(ans)}`,
+        `Answer: ${ans}`
+      ];
+    }
+  } catch(e) {}
+  return [`Think carefully about the operation`, `Answer: ${ans}`];
+}
+
+function gcd(a, b) { a=Math.abs(a); b=Math.abs(b); while(b){[a,b]=[b,a%b];} return a||1; }
 
 function clearHints() {
   const h = document.getElementById('activeHint');
@@ -1517,10 +1665,14 @@ function clearHints() {
 //  SKIP, PAUSE, RESUME, QUIT
 // ══════════════════════════════════════════════════════
 function skipQuestion() {
+  if (challengeMode === 'sudden') { endGame(); return; }
   answeredQuestions.push({ question: qText.textContent, userAnswer:'Skipped', correctAnswer: currentAnswer, isCorrect:false });
   streak = 0; streakEl.textContent = 0; updateComboBanner();
+  autoScaleUpdate(false);
+  if (challengeMode === 'normal') loseLife();
   totalAnswered++; updateAccuracy();
   clearHints();
+  if (challengeMode === 'blitz' && currentQuestion >= 20) { endGame(); return; }
   if (!timerEnabled && currentQuestion >= totalQuestions) { endGame(); return; }
   hintUsed=false; hintBtn.disabled=false; hintBtn.style.opacity='1';
   generateQuestion();
@@ -1567,7 +1719,7 @@ function generateQuestion() {
   const badgeMap = { arithmetic:'Arithmetic', algebra:'Algebra', sqrt:'Square Root', factor:'Factorize' };
   qTypeBadge.textContent = badgeMap[type] || type;
 
-  // Retry to avoid repeating — seenQuestions persists whole session
+  // Retry up to 20 times to avoid re-showing same question this session
   let _tries = 0;
   do {
     if (type==='algebra')     generateAlgebraQuestion();
@@ -1643,6 +1795,25 @@ function startGame() {
   gamePaused=false; answeredQuestions=[]; seenQuestions.clear();
   hintUsed=false; hintBtn.disabled=false; hintBtn.style.opacity='1';
 
+  // Challenge mode setup
+  challengeMode = document.querySelector('.chal-btn.active')?.dataset?.chal || 'normal';
+  lives = 3;
+  autoScaleLevel = 0; autoScaleCorrectStreak = 0; autoScaleWrongStreak = 0;
+  applyAutoScale();
+
+  // Lives visibility
+  const livesRow = document.getElementById('livesRow');
+  livesRow.style.display = challengeMode === 'normal' ? 'flex' : 'none';
+  renderLives();
+
+  // Blitz: 20 questions, no timer
+  if (challengeMode === 'blitz') {
+    totalQuestions = 20;
+    blitzStartTime = Date.now();
+  } else {
+    totalQuestions = 10;
+  }
+
   scoreEl.textContent='0'; streakEl.textContent='0'; accuracyEl.textContent='—'; qNumEl.textContent='1';
   comboBanner.classList.remove('visible');
   updateXPBar();
@@ -1673,6 +1844,16 @@ function endGame() {
   document.getElementById('endAccuracy').textContent = acc + '%';
   document.getElementById('endBestStreak').textContent = bestStreak;
   document.getElementById('endXP').textContent = '+' + totalXPSession;
+
+  // Blitz: show elapsed time
+  if (challengeMode === 'blitz') {
+    const elapsed = Math.round((Date.now() - blitzStartTime) / 1000);
+    const m = Math.floor(elapsed/60), s = elapsed%60;
+    document.getElementById('endMsg').textContent = `Blitz done in ${m}:${String(s).padStart(2,'0')}!`;
+  }
+  if (challengeMode === 'sudden' && !isCorrect) {
+    document.getElementById('endMsg').textContent = '💀 Sudden Death — one wrong ended it!';
+  }
 
   const msgs = [
     [90, '🌟', "Math wizard! Unstoppable!"],
@@ -1743,6 +1924,13 @@ function renderReview() {
 //  EVENT LISTENERS
 // ══════════════════════════════════════════════════════
 document.getElementById('startBtn').addEventListener('click', startGame);
+
+document.querySelectorAll('.chal-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.chal-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
 document.getElementById('playAgainBtn').addEventListener('click', resetGame);
 hintBtn.addEventListener('click', generateHint);
 skipBtn.addEventListener('click', skipQuestion);
