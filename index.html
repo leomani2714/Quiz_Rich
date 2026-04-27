@@ -1075,10 +1075,20 @@ function updateAccuracy() {
 // ══════════════════════════════════════════════════════
 //  QUESTION GENERATION (all logic preserved from previous version)
 // ══════════════════════════════════════════════════════
+// ── helpers ──────────────────────────────────────────
+function randInt(min, max) { return Math.floor(Math.random()*(max-min+1))+min; }
 function getRandomNumberByDigits(digits) {
-  if (digits === 1) return Math.floor(Math.random()*9)+1;
-  const min = 10**(digits-1), max = 10**digits-1;
-  return Math.floor(Math.random()*(max-min+1))+min;
+  if (digits === 1) return randInt(1,9);
+  return randInt(10**(digits-1), 10**digits-1);
+}
+function gcd(a,b){ a=Math.abs(a);b=Math.abs(b); while(b){[a,b]=[b,a%b];} return a; }
+function fmtFrac(n,d){
+  // reduce and format a fraction n/d as string like "3/4" or "-2/5"
+  if(d===0) return '0';
+  if(n%d===0) return String(n/d);
+  const g=gcd(Math.abs(n),Math.abs(d));
+  const sign=(n<0)!==(d<0)?'-':'';
+  return `${sign}${Math.abs(n/g)}/${Math.abs(d/g)}`;
 }
 function chooseProblemType() {
   const types = ['arithmetic'];
@@ -1088,8 +1098,63 @@ function chooseProblemType() {
   return types[Math.floor(Math.random()*types.length)];
 }
 
+// ── ARITHMETIC ────────────────────────────────────────
+// Includes: positive ints, negative ints, rationals (fractions)
 function generateArithmeticQuestion() {
+  const mode = currentMode;
+  // roll what sub-type: 0=int arithmetic, 1=negative int, 2=rational/fraction
+  const subRoll = Math.random();
+  const useNeg      = subRoll < 0.35;                        // 35% negative integers
+  const useFraction = !useNeg && subRoll < 0.60;             // 25% rational numbers
+  // useFraction only on medium/hard; fall back to normal on easy
+  const doFraction  = useFraction && mode !== 'easy';
+
+  if (doFraction) {
+    // Rational: a/b ÷ c/d or a/b + c/d or a/b × c/d
+    const ops2 = ['+','-','×','÷'];
+    const op = ops2[randInt(0,3)];
+    const a=randInt(1,9), b=randInt(2,8), c=randInt(1,9), d=randInt(2,8);
+    // ensure b≠d for interest, avoid trivial
+    let n, den;
+    if(op==='+'){  n=a*d+c*b; den=b*d; }
+    else if(op==='-'){ n=a*d-c*b; den=b*d; }
+    else if(op==='×'){ n=a*c; den=b*d; }
+    else /* ÷ */     { n=a*d; den=b*c; }
+    currentAnswer = fmtFrac(n,den);
+    qText.textContent = `${fmtFrac(a,b)} ${op} ${fmtFrac(c,d)} = ?`;
+    return;
+  }
+
   const op = operations[Math.floor(Math.random()*operations.length)];
+
+  if (useNeg) {
+    // Negative integer arithmetic — operands may be negative
+    const maxN = mode==='hard'?50:mode==='medium'?20:10;
+    const a = randInt(-maxN, maxN);
+    const b = randInt(-maxN, maxN);
+    if (op==='÷') {
+      // ensure clean division
+      const divisor = randInt(1,maxN)||1;
+      const quotient = randInt(-10,10)||1;
+      const dividend = divisor*quotient;
+      currentAnswer = quotient;
+      qText.textContent = `${dividend} ÷ ${divisor} = ?`;
+    } else if (op==='×') {
+      currentAnswer = a*b;
+      qText.textContent = `(${a}) × (${b}) = ?`;
+    } else if (op==='+') {
+      currentAnswer = a+b;
+      const bStr = b<0 ? `(${b})` : String(b);
+      qText.textContent = `${a} + ${bStr} = ?`;
+    } else { // −
+      currentAnswer = a-b;
+      const bStr = b<0 ? `(${b})` : String(b);
+      qText.textContent = `${a} − ${bStr} = ?`;
+    }
+    return;
+  }
+
+  // Standard positive integer arithmetic
   let a, b;
   if (op === '÷') {
     const q = getRandomNumberByDigits(Math.max(1,problemDigits-1));
@@ -1102,36 +1167,55 @@ function generateArithmeticQuestion() {
   }
   a = getRandomNumberByDigits(problemDigits);
   b = getRandomNumberByDigits(Math.min(problemDigits,2));
-  if (op==='-') { if(b>a)[a,b]=[b,a]; currentAnswer=a-b; qText.textContent=`${a} − ${b} = ?`; }
+  if (op==='-') { currentAnswer=a-b; qText.textContent=`${a} − ${b} = ?`; }
   else if (op==='×') { currentAnswer=a*b; qText.textContent=`${a} × ${b} = ?`; }
   else { currentAnswer=a+b; qText.textContent=`${a} + ${b} = ?`; }
 }
 
+// ── ALGEBRA ──────────────────────────────────────────
+// Solutions are integers (including negatives)
 function generateAlgebraQuestion() {
+  const maxN = currentMode==='hard'?15:currentMode==='medium'?10:5;
   const choice = Math.random();
+  // x can be any integer in [-maxN, maxN] \ {0}
+  function randX(){ let v=0; while(!v) v=randInt(-maxN,maxN); return v; }
   if (choice<0.2){
-    const a=getRandomNumberByDigits(Math.max(1,problemDigits)), x=getRandomNumberByDigits(Math.max(1,problemDigits));
-    currentAnswer=x; qText.textContent=`x + ${a} = ${x+a}`;
+    const a=randInt(1,maxN), x=randX();
+    currentAnswer=x;
+    const rhs=x+a;
+    qText.textContent=`x + ${a} = ${rhs}`;
   } else if (choice<0.4){
-    const a=getRandomNumberByDigits(Math.max(1,problemDigits)), x=getRandomNumberByDigits(Math.max(1,problemDigits));
-    currentAnswer=x; qText.textContent=`x − ${a} = ${x-a}`;
+    const a=randInt(1,maxN), x=randX();
+    currentAnswer=x;
+    const rhs=x-a;
+    qText.textContent=`x − ${a} = ${rhs}`;
   } else if (choice<0.6){
-    const a=Math.floor(Math.random()*8)+2, x=getRandomNumberByDigits(Math.max(1,problemDigits-1));
-    currentAnswer=x; qText.textContent=`${a}x = ${a*x}`;
+    const a=randInt(2,8), x=randX();
+    currentAnswer=x;
+    qText.textContent=`${a}x = ${a*x}`;
   } else if (choice<0.8){
-    const a=Math.floor(Math.random()*5)+2, b=getRandomNumberByDigits(Math.max(1,problemDigits-1));
-    currentAnswer=a*b; qText.textContent=`x / ${a} = ${b}`;
+    const a=randInt(2,6), x=randX();
+    currentAnswer=x;
+    qText.textContent=`x / ${a} = ${x}`;  // answer is x, rhs shown is x (user solves for lhs numerator)
+    // reframe: x / a = rhs => x = a*rhs
+    const rhs=x; currentAnswer=a*rhs;
+    qText.textContent=`x / ${a} = ${rhs}`;
   } else {
-    const a=Math.floor(Math.random()*5)+2, x=getRandomNumberByDigits(Math.max(1,problemDigits-2||1)), b=getRandomNumberByDigits(Math.max(1,problemDigits-2||1));
-    currentAnswer=x; qText.textContent=`${a}x + ${b} = ${a*x+b}`;
+    const a=randInt(2,6), x=randX(), b=randInt(1,10);
+    currentAnswer=x;
+    const rhs=a*x+b;
+    const rhsStr=rhs>=0?String(rhs):`(${rhs})`;
+    qText.textContent=`${a}x + ${b} = ${rhsStr}`;
   }
 }
 
+// ── SQRT ─────────────────────────────────────────────
+// Answer shown as ±r
 function generateSqrtQuestion() {
   const maxRoot = currentMode==='hard' ? 20 : currentMode==='medium' ? 15 : 12;
-  const r = Math.floor(Math.random() * maxRoot) + 1;
-  currentAnswer = `±${r}`;   // ±r as string answer
-  qText.textContent = `√${r * r} = ?`;
+  const r = randInt(1, maxRoot);
+  currentAnswer = `\u00b1${r}`;
+  qText.textContent = `\u221a${r*r} = ?`;
 }
 
 function generateFactorQuestion() {
@@ -1178,21 +1262,66 @@ const KB_LABELS = ['1','2','3','4'];
 function buildChoices() {
   choicesGrid.innerHTML = '';
   const correct = currentAnswer;
-  if (typeof correct === 'number') {
-    const set = new Set([correct]);
-    while (set.size < 4) {
-      const delta = Math.max(1, Math.floor(Math.abs(correct)*0.3)||2);
-      let c = correct + (Math.floor(Math.random()*9)-4)*delta;
-      if (c===correct) c = correct+(Math.floor(Math.random()*5)-2)||correct+1;
+  const correctStr = String(correct);
+
+  // ── Fraction distractors ─────────────────────────
+  if (typeof correct === 'string' && /^-?\d+\/\d+$/.test(correctStr)) {
+    const [numS, denS] = correctStr.split('/');
+    const n=parseInt(numS), d=parseInt(denS);
+    const set = new Set([normAnswer(correctStr)]);
+    const candidates = [
+      fmtFrac(n+1,d), fmtFrac(n-1,d), fmtFrac(n,d+1), fmtFrac(n,d-1||1),
+      fmtFrac(n+2,d), fmtFrac(n,d+2), fmtFrac(-n,d), fmtFrac(n+1,d+1)
+    ];
+    for(const c of shuffle(candidates)){
+      if(set.size>=4) break;
+      const nc=normAnswer(c);
+      if(nc!==normAnswer(correctStr) && !set.has(nc)) set.add(c);
+    }
+    const arr = shuffle(Array.from(set));
+    arr.forEach((val,i) => {
+      const btn = makeChoiceBtn(val, KB_LABELS[i], () => processAnswer(val));
+      choicesGrid.appendChild(btn);
+    });
+    return;
+  }
+
+  // ── ±r distractors (sqrt) ────────────────────────
+  if (typeof correct === 'string' && correctStr.startsWith('\u00b1')) {
+    const r = parseInt(correctStr.slice(1));
+    const set = new Set([correctStr]);
+    const cands = [`±${r+1}`,`±${r+2}`,`±${r-1}`,`±${r+3}`,String(r),String(-r)].filter(v=>v!==correctStr&&!v.includes('-0'));
+    for(const c of shuffle(cands)){
+      if(set.size>=4) break;
       set.add(c);
     }
     const arr = shuffle(Array.from(set));
     arr.forEach((val,i) => {
-      const btn = makeChoiceBtn(String(val), KB_LABELS[i], () => processAnswer(val));
+      const btn = makeChoiceBtn(val, KB_LABELS[i], () => processAnswer(val));
       choicesGrid.appendChild(btn);
     });
-  } else {
-    const correctStr = String(correct);
+    return;
+  }
+
+  // ── Numeric distractors (int answers, including negative) ───
+  if (typeof correct === 'number') {
+    const set = new Set([correct]);
+    let att=0;
+    while(set.size<4 && att++<60){
+      const delta=Math.max(1,Math.round(Math.abs(correct)*0.25)||2);
+      const c=correct+(Math.floor(Math.random()*9)-4)*delta;
+      if(c!==correct) set.add(c);
+    }
+    const arr=shuffle(Array.from(set));
+    arr.forEach((val,i)=>{
+      const btn=makeChoiceBtn(String(val),KB_LABELS[i],()=>processAnswer(val));
+      choicesGrid.appendChild(btn);
+    });
+    return;
+  }
+
+  // ── String distractors (algebra/factor expressions) ─────────
+  {
     const set = new Set([correctStr]);
     const nums = (correctStr.match(/-?\d+/g)||[]).map(Number);
     let attempts = 0;
@@ -1207,9 +1336,9 @@ function buildChoices() {
       if (cand===correctStr) cand=correctStr.replace(/\d+/,n=>String(parseInt(n)+2));
       set.add(cand.trim());
     }
-    const arr = shuffle(Array.from(set));
-    arr.forEach((val,i) => {
-      const btn = makeChoiceBtn(val, KB_LABELS[i], () => processAnswer(val));
+    const arr=shuffle(Array.from(set));
+    arr.forEach((val,i)=>{
+      const btn=makeChoiceBtn(val,KB_LABELS[i],()=>processAnswer(val));
       choicesGrid.appendChild(btn);
     });
   }
@@ -1263,13 +1392,28 @@ function exprSignature(expr) {
   } catch(e){return null;}
 }
 
+function normAnswer(v) {
+  // Normalise fraction strings: "6/4" => "3/2", "-4/2" => "-2"
+  const s = String(v).trim().replace(/\s+/g,'');
+  const m = s.match(/^(-?\d+)\/(-?\d+)$/);
+  if (m) {
+    let n=parseInt(m[1]), d=parseInt(m[2]);
+    if(d<0){n=-n;d=-d;}
+    const g=gcd(Math.abs(n),d); n/=g; d/=g;
+    return d===1?String(n):`${n}/${d}`;
+  }
+  return s.toLowerCase();
+}
 function processAnswer(userAnswer) {
   const isStr = typeof currentAnswer === 'string';
   let isCorrect;
   if (isStr) {
-    const u=String(userAnswer).trim(), c=String(currentAnswer).trim();
-    const su=exprSignature(u), sc=exprSignature(c);
-    isCorrect = (su&&sc) ? su===sc : u.replace(/\s+/g,'')=== c.replace(/\s+/g,'');
+    const u=normAnswer(userAnswer), c=normAnswer(currentAnswer);
+    if(u===c){ isCorrect=true; }
+    else {
+      const su=exprSignature(String(userAnswer)), sc=exprSignature(String(currentAnswer));
+      isCorrect = (su&&sc) ? su===sc : false;
+    }
   } else {
     isCorrect = Number(userAnswer) === Number(currentAnswer);
   }
@@ -1322,7 +1466,7 @@ function processAnswer(userAnswer) {
     else {
       hintUsed = false; hintBtn.disabled = false; hintBtn.style.opacity='1';
       generateQuestion();
-      // timer counts down for whole session
+      // global countdown — no per-question reset
     }
   }, 1100);
 }
@@ -1380,7 +1524,7 @@ function skipQuestion() {
   if (!timerEnabled && currentQuestion >= totalQuestions) { endGame(); return; }
   hintUsed=false; hintBtn.disabled=false; hintBtn.style.opacity='1';
   generateQuestion();
-  // timer counts down for whole session
+  // global countdown — no per-question reset
 }
 
 function pauseGame() {
@@ -1423,14 +1567,15 @@ function generateQuestion() {
   const badgeMap = { arithmetic:'Arithmetic', algebra:'Algebra', sqrt:'Square Root', factor:'Factorize' };
   qTypeBadge.textContent = badgeMap[type] || type;
 
-  let _attempts = 0;
+  // Retry to avoid repeating — seenQuestions persists whole session
+  let _tries = 0;
   do {
     if (type==='algebra')     generateAlgebraQuestion();
     else if (type==='sqrt')   generateSqrtQuestion();
     else if (type==='factor') generateFactorQuestion();
     else                      generateArithmeticQuestion();
-    _attempts++;
-  } while (_attempts < 15 && seenQuestions.has(qText.textContent));
+    _tries++;
+  } while (_tries < 20 && seenQuestions.has(qText.textContent));
   seenQuestions.add(qText.textContent);
 
   // Trigger slide-in animation
