@@ -1342,26 +1342,26 @@ function fromRoman(s){
 }
 function generateRomanQuestion() {
   const mode = currentMode;
-  const max  = mode==='hard'?3000:mode==='medium'?1000:200;
+  const max  = mode==='hard'?500:mode==='medium'?200:100;
   const min  = mode==='easy'?1:10;
   const kind = Math.floor(Math.random()*3);
   if (kind===0) {
-    // "XIV + IX = ?"  answer in arabic
+    // "XIV + IX = ?" → MCQ with arabic number choices
     const a=Math.floor(Math.random()*(max/2-min))+min;
     const b=Math.floor(Math.random()*(max/2-min))+min;
-    if(a+b>3999){ currentAnswer=a+b; qText.textContent=`${a} + ${b} = ? (Roman)`; return; }
-    currentAnswer = a+b;
-    qText.textContent = `${toRoman(a)} + ${toRoman(b)} = ? (Arabic)`;
+    const sum=a+b;
+    currentAnswer = sum;
+    qText.textContent = `${toRoman(a)} + ${toRoman(b)} = ? (give Arabic number)`;
   } else if (kind===1) {
-    // "Convert XIV to arabic"
+    // "XIV = ?" → MCQ with arabic number choices
     const n=Math.floor(Math.random()*(max-min))+min;
-    currentAnswer=n;
-    qText.textContent=`${toRoman(n)} = ? (Arabic)`;
+    currentAnswer = n;
+    qText.textContent = `${toRoman(n)} = ? (Arabic)`;
   } else {
-    // "Convert 47 to Roman (give number)"  — MC shows roman options
+    // "47 in Roman numerals?" → MCQ with roman string choices
     const n=Math.floor(Math.random()*(max-min))+min;
-    currentAnswer=toRoman(n);
-    qText.textContent=`${n} in Roman numerals?`;
+    currentAnswer = toRoman(n);
+    qText.textContent = `${n} in Roman numerals?`;
   }
 }
 
@@ -1766,7 +1766,7 @@ function generateQuestion() {
   questionStartTime = Date.now();
 
   // MC or type-in
-  const isTypable = ['algebra','arithmetic','sqrt','factor'].includes(type);
+  const isTypable = ['algebra','arithmetic','sqrt','factor','percent','word','exponent','bodmas','roman'].includes(type);
   if (isTypable) {
     choicesGrid.classList.remove('hidden');
     inputRow.classList.add('hidden');
