@@ -1693,13 +1693,13 @@ function skipQuestion() {
   if(challengeMode==='sudden'){endGame();return;}
   answeredQuestions.push({question:qText.textContent,userAnswer:'Skipped',correctAnswer:currentAnswer,isCorrect:false});
   streak=0;streakEl.textContent=0;updateComboBanner();autoScaleUpdate(false);
-  if(challengeMode==='normal')loseLife();
+  // Skips do NOT cost a life — only wrong answers do
   totalAnswered++;updateAccuracy();clearHints();
-  if(challengeMode==='blitz'&&currentQuestion>=20){endGame();return;}
-  if(!timerEnabled&&currentQuestion>=totalQuestions){endGame();return;}
   hintUsed=false;hintBtn.disabled=false;hintBtn.style.opacity='1';
-  generateQuestion();
-  // global countdown — no per-question reset
+  generateQuestion(); // increments currentQuestion inside
+  // Check AFTER generateQuestion has updated currentQuestion
+  if(challengeMode==='blitz'&&currentQuestion>=20){endGame();return;}
+  if(!timerEnabled&&currentQuestion>totalQuestions){endGame();return;}
 }
 
 function pauseGame() {
